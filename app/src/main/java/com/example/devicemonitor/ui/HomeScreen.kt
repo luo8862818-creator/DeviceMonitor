@@ -3,27 +3,37 @@ package com.example.devicemonitor.ui
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.devicemonitor.viewmodel.HomeViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
@@ -57,6 +67,15 @@ fun HomeScreen(
     )
 
 
+    val averageBattery = if (devices.isNotEmpty()) {
+        devices.map { it.battery }
+            .average()
+            .toInt()
+    } else {
+        0
+    }
+
+
     LaunchedEffect(uiState.errorMessage) {
         Log.d(
             "HomeScreen",
@@ -74,6 +93,23 @@ fun HomeScreen(
     Log.d("HomeScreen", "⑤ 准备执行 Scaffold")
     Scaffold(
         modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title={
+                    Column{
+                        Text(
+                            text = "设备监控"
+                        )
+                        Text(
+                            text = "查看设备实时运行状态",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            )
+        },
+
         snackbarHost = {
             SnackbarHost(
                 hostState = snackbarHostState
@@ -91,10 +127,44 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-            Text(text = "设备监控系统", fontSize = 24.sp)
-            Text(text = "设备总数：${devices.size}")
-            Text(text = "在线设备：${onlineCount}")
-            Text(text = "离线设备：${offlineCount}")
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    StatCard(
+                        title = "全部设备",
+                        value = devices.size.toString(),
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    StatCard(
+                        title = "在线设备",
+                        value = onlineCount.toString(),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    StatCard(
+                        title = "离线设备",
+                        value = offlineCount.toString(),
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    StatCard(
+                        title = "平均电量",
+                        value = "$averageBattery%",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
 
 
             Button(
@@ -132,4 +202,36 @@ fun HomeScreen(
     }
 
 
+}
+
+
+@Composable
+fun StatCard(
+    title: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = title,
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
+
+            Text(
+                text = value,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
 }
