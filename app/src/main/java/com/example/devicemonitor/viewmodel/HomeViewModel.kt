@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 import android.util.Log
+import com.example.devicemonitor.data.DeviceRepository
 
 
 data class HomeUiState(
@@ -20,12 +21,16 @@ data class HomeUiState(
 class HomeViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(
-        HomeUiState(
-            devices = FakeDeviceRepository.getDevices()
-        )
+        HomeUiState()
     )
 
     val uiState: StateFlow<HomeUiState> = _uiState
+
+
+    init {
+        Log.d("HomeViewModel", "① ViewModel 创建，首次加载设备")
+        refresh()
+    }
 
 
     fun refresh() {
@@ -41,7 +46,7 @@ class HomeViewModel : ViewModel() {
 
             try {
                 Log.d("HomeViewModel", "开始调用 Repository")
-                val newDevices = FakeDeviceRepository.refreshDevices()
+                val newDevices = DeviceRepository.getDevices()
                 _uiState.value = _uiState.value.copy(
                     devices = newDevices,
                     isLoading = false

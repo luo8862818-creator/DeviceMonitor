@@ -20,11 +20,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DeviceMonitorTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    HomeScreen(
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                HomeScreen(
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
     }
