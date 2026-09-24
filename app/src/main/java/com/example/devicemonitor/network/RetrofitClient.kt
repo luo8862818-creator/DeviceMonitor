@@ -1,16 +1,27 @@
 package com.example.devicemonitor.network
 
+import android.util.Log
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
 
-    private const val BASE_URL = "http://192.168.4.110:8080/"
+    fun createDeviceApi(
+        serverAddress: String,
+        serverPort: String
+    ): DeviceApi {
+        val baseUrl = "http://${serverAddress.trim()}:${serverPort.trim()}/"
 
-    private val retrofit: Retrofit = Retrofit.Builder()
-        .baseUrl(BASE_URL)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
+        Log.d(
+            "RetrofitClient",
+            "① 创建 Retrofit，baseUrl=$baseUrl"
+        )
 
-    val deviceApi: DeviceApi = retrofit.create(DeviceApi::class.java)
+        val retrofit = Retrofit.Builder()
+            .baseUrl(baseUrl)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        return retrofit.create(DeviceApi::class.java)
+    }
 }
