@@ -99,15 +99,27 @@ fun DeviceMonitorApp() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") {
-                HomeScreen( viewModel = homeViewModel)
+                HomeScreen(viewModel = homeViewModel)
             }
 
             composable("devices") {
-                DeviceScreen( viewModel = homeViewModel)
+                DeviceScreen(viewModel = homeViewModel, navController = navController)
             }
 
             composable("settings") {
                 SettingsScreen()
+            }
+
+            composable("deviceDetail/{mac}") { backStackEntry ->
+                val mac = backStackEntry.arguments?.getString("mac") ?: ""
+
+                DeviceDetailScreen(
+                    mac = mac,
+                    viewModel = homeViewModel,
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
             }
         }
     }

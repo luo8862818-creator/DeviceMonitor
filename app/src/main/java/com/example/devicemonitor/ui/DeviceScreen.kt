@@ -25,11 +25,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.example.devicemonitor.viewmodel.HomeViewModel
 
 @Composable
 fun DeviceScreen(
     viewModel: HomeViewModel,
+    navController: NavController,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -138,7 +140,10 @@ fun DeviceScreen(
         ) {
             items(filteredDevices) { device ->
                 DeviceCard(
-                    device = device
+                    device = device,
+                    onClick = {
+                        navController.navigate("deviceDetail/${device.mac}")
+                    }
                 )
             }
         }
