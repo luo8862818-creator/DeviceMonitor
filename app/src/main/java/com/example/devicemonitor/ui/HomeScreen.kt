@@ -15,16 +15,20 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,6 +36,16 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.devicemonitor.viewmodel.HomeViewModel
+
+
+/*ALL      → 全部
+ONLINE   → 在线
+OFFLINE  → 离线*/
+enum class DeviceFilter {
+    ALL,
+    ONLINE,
+    OFFLINE
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,6 +73,26 @@ fun HomeScreen(
         device.online
     }
     val offlineCount = devices.size - onlineCount
+
+
+    var selectedFilter by remember {
+        mutableStateOf(DeviceFilter.ALL)
+    }
+
+    val filteredDevices = when (selectedFilter) {
+
+        DeviceFilter.ALL -> {
+            devices
+        }
+
+        DeviceFilter.ONLINE -> {
+            devices.filter { it.online }
+        }
+
+        DeviceFilter.OFFLINE -> {
+            devices.filter { !it.online }
+        }
+    }
 
 
     Log.d(
@@ -95,8 +129,8 @@ fun HomeScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title={
-                    Column{
+                title = {
+                    Column {
                         Text(
                             text = "设备监控"
                         )
@@ -166,38 +200,71 @@ fun HomeScreen(
                 }
             }
 
+            Text(
+                text = "设备",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
 
-            Button(
-                onClick = {
-                    viewModel.refresh()
-                },
-                enabled = !uiState.isLoading
-
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = if (uiState.isLoading) {
-                        "刷新中..."
-                    } else {
-                        "刷新设备"
+
+                FilterChip(
+                    selected = selectedFilter == DeviceFilter.ALL,
+                    onClick = {
+                        selectedFilter = DeviceFilter.ALL
+                    },
+                    label = {
+                        Text("全部 ${devices.size}")
+                    }
+                )
+
+                FilterChip(
+                    selected = selectedFilter == DeviceFilter.ONLINE,
+                    onClick = {
+                        selectedFilter = DeviceFilter.ONLINE
+                    },
+                    label = {
+                        Text("在线 $onlineCount")
+                    }
+                )
+
+                FilterChip(
+                    selected = selectedFilter == DeviceFilter.OFFLINE,
+                    onClick = {
+                        selectedFilter = DeviceFilter.OFFLINE
+                    },
+                    label = {
+                        Text("离线 $offlineCount")
                     }
                 )
             }
 
 
-            if (uiState.isLoading) {
-                CircularProgressIndicator()
+            PullToRefreshBox(
+                isRefreshing = uiState.isLoading,
+                onRefresh = {
+                    viewModel.refresh()
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(filteredDevices) { device ->
+                        DeviceCard(
+                            device = device
+                        )
+                    }
+                }
+
             }
 
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(devices) { device ->
-                    DeviceCard(
-                        device = device
-                    )
-                }
-            }
+
         }
     }
 
