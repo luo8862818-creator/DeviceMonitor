@@ -1,7 +1,7 @@
 package com.example.devicemonitor.ui
 
 
-
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,9 +13,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,59 +27,110 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.devicemonitor.viewmodel.SettingsViewModel
 
 @Composable
 fun SettingsScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: SettingsViewModel = viewModel()
 ) {
+
+    Log.d("SettingsScreen", "========== 进入设置页面 ==========")
+
+    val settings by viewModel.settings.collectAsStateWithLifecycle()
+
     var serverAddress by remember {
-        mutableStateOf("10.0.2.2")
+        mutableStateOf("")
     }
 
     var serverPort by remember {
-        mutableStateOf("8080")
+        mutableStateOf("")
     }
 
     var autoRefresh by remember {
         mutableStateOf(false)
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = "设置",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
+    val snackbarHostState = remember {
+        SnackbarHostState()
+    }
 
-        ServerSettingsCard(
-            serverAddress = serverAddress,
-            serverPort = serverPort,
-            onServerAddressChange = {
-                serverAddress = it
-            },
-            onServerPortChange = {
-                serverPort = it
-            },
-            onTestConnection = {
-                // 下一步实现
-            }
-        )
+    Log.d("SettingsScreen", "设置的参数是啥 ${settings}")
+    Log.d("SettingsScreen", "我设置了一些基本的参数，服务器IP=${serverAddress}, snackbarHostState=${snackbarHostState.toString()}")
 
-        AutoRefreshCard(
-            autoRefresh = autoRefresh,
-            onAutoRefreshChange = {
-                autoRefresh = it
+    LaunchedEffect(settings) {
+        serverAddress = settings.serverAddress
+        serverPort = settings.serverPort
+        autoRefresh = settings.autoRefresh
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.message.collect { message ->
+            snackbarHostState.showSnackbar(message)
+        }
+    }
+
+    Scaffold(
+        modifier = modifier,
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "设置",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            ServerSettingsCard(
+                serverAddress = serverAddress,
+                serverPort = serverPort,
+                onServerAddressChange = {
+                    serverAddress = it
+                },
+                onServerPortChange = {
+                    serverPort = it
+                },
+                onTestConnection = {
+                    viewModel.testConnection(
+                        serverAddress = serverAddress,
+                        serverPort = serverPort
+                    )
+                }
+            )
+
+            AutoRefreshCard(
+                autoRefresh = autoRefresh,
+                onAutoRefreshChange = {
+                    autoRefresh = it
+                }
+            )
+
+            Button(
+                onClick = {
+                    viewModel.saveSettings(
+                        serverAddress = serverAddress,
+                        serverPort = serverPort,
+                        autoRefresh = autoRefresh
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("保存设置")
             }
-        )
+        }
     }
 }
 
@@ -100,6 +155,12 @@ private fun ServerSettingsCard(
                 fontWeight = FontWeight.Bold
             )
 
+            Text(
+                text = "配置设备数据接口的服务器地址",
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
             OutlinedTextField(
                 value = serverAddress,
                 onValueChange = onServerAddressChange,
@@ -115,10 +176,17 @@ private fun ServerSettingsCard(
 
             OutlinedTextField(
                 value = serverPort,
-                onValueChange = onServerPortChange,
+                onValueChange = { value ->
+                    if (value.all { it.isDigit() }) {
+                        onServerPortChange(value)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
                 label = {
                     Text("服务器端口")
+                },
+                placeholder = {
+                    Text("例如：8080")
                 },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -152,6 +220,7 @@ private fun AutoRefreshCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(

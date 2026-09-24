@@ -58,4 +58,5 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     implementation(libs.androidx.navigation.compose)
     implementation("androidx.compose.material:material-icons-extended")
+    implementation(libs.androidx.datastore.preferences)
 }
