@@ -15,11 +15,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.devicemonitor.viewmodel.HomeViewModel
 
 data class BottomNavItem(
     val title: String,
@@ -29,8 +31,12 @@ data class BottomNavItem(
 
 @Composable
 fun DeviceMonitorApp() {
+
+
     // 创建导航控制器
     val navController = rememberNavController()
+    val homeViewModel: HomeViewModel = viewModel()
+
 
     // 底部导航栏的三个页面
     val bottomItems = listOf(
@@ -93,11 +99,11 @@ fun DeviceMonitorApp() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") {
-                HomeScreen()
+                HomeScreen( viewModel = homeViewModel)
             }
 
             composable("devices") {
-                DeviceScreen()
+                DeviceScreen( viewModel = homeViewModel)
             }
 
             composable("settings") {
